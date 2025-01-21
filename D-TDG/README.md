@@ -41,3 +41,9 @@ pydgn-train --config-file $model_config
 Please set ``data_config`` and ``model_config`` according to the data and model that you want to experiment.
 
 Also, refer to [PyDGN](https://github.com/diningphil/PyDGN) for more details about the experimental framework.
+
+--------------------
+MVA's DL Project:
+--------------------
+
+more datasets for the spatio-temporal graphs: https://github.com/benedekrozemberczki/spatiotemporal_datasets
