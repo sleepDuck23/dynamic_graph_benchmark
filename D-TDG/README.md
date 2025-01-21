@@ -47,3 +47,13 @@ MVA's DL Project:
 --------------------
 
 more datasets for the spatio-temporal graphs: https://github.com/benedekrozemberczki/spatiotemporal_datasets
+
+stacked architecture:
+https://github.com/snap-stanford/roland
+https://github.com/geopanag/pandemic_tgnn
+
+random walk:
+https://github.com/dev-jwel/TiaRa
+
+Autoencoder:
+https://github.com/palash1992/DynamicGEM
