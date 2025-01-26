@@ -216,6 +216,82 @@ class MontevideoBusDatasetInterface(METRLADatasetInterface):
     @property
     def dim_target(self):
         return 1
+    
+# New class/dataset for the DL project (Citi Bike of New York 2017)
+class CitiBikeDatasetInterface:
+    """
+    Citi Bike Dataset Interface for spatio-temporal graph node prediction.
+    Combines monthly CSV files into a single dataset for easier processing.
+    """
+
+    def __init__(self, root, url, num_timesteps_in=1, num_timesteps_out=1):
+        self.root = root
+        self.url = url
+        self.num_timesteps_in = num_timesteps_in
+        self.num_timesteps_out = num_timesteps_out
+
+        # Ensure the dataset is downloaded and extracted
+        self.data_path = self.download_and_extract()
+
+        # Combine all monthly CSV files into a single DataFrame
+        self.data = self.combine_csv_files()
+
+    def download_and_extract(self):
+        # Ensure the root directory exists
+        os.makedirs(self.root, exist_ok=True)
+
+        zip_path = join(self.root, "2017-citibike-tripdata.zip")
+        extract_path = join(self.root, "2017-citibike-tripdata")
+
+        if not os.path.exists(zip_path):
+            print("Downloading dataset...")
+            response = requests.get(self.url)
+            if response.status_code == 200:
+                with open(zip_path, "wb") as f:
+                    f.write(response.content)
+                print("Dataset downloaded.")
+            else:
+                raise Exception(f"Failed to download dataset. Status code: {response.status_code}")
+
+        # Extract the zip file if not already extracted
+        if not os.path.exists(extract_path):
+            print("Extracting dataset...")
+            with zipfile.ZipFile(zip_path, "r") as zip_ref:
+                zip_ref.extractall(extract_path)
+            print("Dataset extracted.")
+        else:
+            print("Dataset already extracted.")
+
+        return extract_path
+
+    def combine_csv_files(self, output_file="./combined_citibike_data.csv"):
+      print("Combining monthly data into a single CSV (optimized for low memory)...")
+  
+      # Open the output file in write mode
+      first_file = True  # To track whether to write the header
+      for month_folder in sorted(os.listdir(self.data_path)):
+          month_path = join(self.data_path, month_folder)
+          if os.path.isdir(month_path):
+              for file in os.listdir(month_path):
+                  if file.endswith(".csv"):
+                      file_path = join(month_path, file)
+                      print(f"Processing {file_path} in chunks...")
+                      
+                      # Read file in chunks
+                      for chunk in pd.read_csv(file_path, chunksize=10000):  # Adjust chunksize as needed
+                          # Normalize column names
+                          chunk.columns = chunk.columns.str.strip().str.lower()
+  
+                          # Write header only for the first file
+                          chunk.to_csv(output_file, mode='a', index=False, header=first_file)
+                          first_file = False  # After the first chunk, don't write the header again
+  
+      print(f"All data combined into {output_file}.")
+
+
+    def get_data(self):
+        # You can implement further processing if needed
+        return self.data
 
 
 # **** NODE PREDICTION ON DISCRETE-DYNAMIC GRAPHS ****
