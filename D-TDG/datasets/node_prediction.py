@@ -10,6 +10,8 @@ from torch_geometric.data import Data, download_url, extract_zip
 from torch_geometric.utils import from_scipy_sparse_matrix
 import os
 import pickle
+import requests
+import zipfile
 
 # **** NODE PREDICTION ON SPATIO-TEMPORAL GRAPHS ****
 class METRLADatasetInterface(TemporalDatasetInterface):
@@ -218,13 +220,16 @@ class MontevideoBusDatasetInterface(METRLADatasetInterface):
         return 1
     
 # New class/dataset for the DL project (Citi Bike of New York 2017)
-class CitiBikeDatasetInterface:
+class CitiBikeDatasetInterface(TemporalDatasetInterface):
     """
     Citi Bike Dataset Interface for spatio-temporal graph node prediction.
     Combines monthly CSV files into a single dataset for easier processing.
     """
 
     def __init__(self, root, url, num_timesteps_in=1, num_timesteps_out=1):
+        # Initialize the parent class
+        super().__init__(root=root, num_timesteps_in=num_timesteps_in, num_timesteps_out=num_timesteps_out)
+
         self.root = root
         self.url = url
         self.num_timesteps_in = num_timesteps_in
@@ -233,8 +238,12 @@ class CitiBikeDatasetInterface:
         # Ensure the dataset is downloaded and extracted
         self.data_path = self.download_and_extract()
 
-        # Combine all monthly CSV files into a single DataFrame
-        self.data = self.combine_csv_files()
+        # Combine all monthly CSV files into a single CSV file
+        self.combined_file = "./combined_citibike_data.csv"
+        self.combine_csv_files(self.combined_file)
+
+        # Load the combined CSV file and create temporal windows
+        self.temporal_data = self.load_and_create_temporal_windows()
 
     def download_and_extract(self):
         # Ensure the root directory exists
@@ -264,34 +273,77 @@ class CitiBikeDatasetInterface:
 
         return extract_path
 
-    def combine_csv_files(self, output_file="./combined_citibike_data.csv"):
-      print("Combining monthly data into a single CSV (optimized for low memory)...")
-  
-      # Open the output file in write mode
-      first_file = True  # To track whether to write the header
-      for month_folder in sorted(os.listdir(self.data_path)):
-          month_path = join(self.data_path, month_folder)
-          if os.path.isdir(month_path):
-              for file in os.listdir(month_path):
-                  if file.endswith(".csv"):
-                      file_path = join(month_path, file)
-                      print(f"Processing {file_path} in chunks...")
-                      
-                      # Read file in chunks
-                      for chunk in pd.read_csv(file_path, chunksize=10000):  # Adjust chunksize as needed
-                          # Normalize column names
-                          chunk.columns = chunk.columns.str.strip().str.lower()
-  
-                          # Write header only for the first file
-                          chunk.to_csv(output_file, mode='a', index=False, header=first_file)
-                          first_file = False  # After the first chunk, don't write the header again
-  
-      print(f"All data combined into {output_file}.")
+    def combine_csv_files(self, output_file):
+        """
+        Combines all monthly CSV files into a single CSV (optimized for low memory usage).
+        """
+        print("Combining monthly data into a single CSV (optimized for low memory)...")
 
+        # Open the output file in write mode
+        first_file = True  # To track whether to write the header
+        for month_folder in sorted(os.listdir(self.data_path)):
+            month_path = join(self.data_path, month_folder)
+            if os.path.isdir(month_path):
+                for file in os.listdir(month_path):
+                    if file.endswith(".csv"):
+                        file_path = join(month_path, file)
+                        print(f"Processing {file_path} in chunks...")
+
+                        # Read file in chunks
+                        for chunk in pd.read_csv(file_path, chunksize=10000):  # Adjust chunksize as needed
+                            # Normalize column names
+                            chunk.columns = chunk.columns.str.strip().str.lower()
+
+                            # Write header only for the first file
+                            chunk.to_csv(output_file, mode='a', index=False, header=first_file)
+                            first_file = False  # After the first chunk, don't write the header again
+
+        print(f"All data combined into {output_file}.")
+
+    def load_and_create_temporal_windows(self):
+        """
+        Loads the combined CSV file and converts the data into temporal windows.
+        """
+        print("Loading combined data and creating temporal windows...")
+
+        # Read the combined file in chunks
+        temporal_data = []
+        for chunk in pd.read_csv(self.combined_file, chunksize=10000):  # Adjust chunksize if necessary
+            # Parse datetime for sorting and consistency
+            chunk['starttime'] = pd.to_datetime(chunk['starttime'])
+            chunk.sort_values('starttime', inplace=True)
+
+            # Normalize column names for consistent processing
+            chunk.columns = chunk.columns.str.strip().str.lower()
+
+            # Ensure data is sorted by 'starttime'
+            chunk.reset_index(drop=True, inplace=True)
+
+            # Create temporal windows
+            temporal_data.extend(self._create_temporal_windows(chunk))
+
+        return temporal_data
+
+    def _create_temporal_windows(self, data):
+        """
+        Creates input-output temporal windows from the dataset.
+        Each window contains `num_timesteps_in` for input and `num_timesteps_out` for output.
+        """
+        temporal_windows = []
+        for i in range(len(data) - self.num_timesteps_in - self.num_timesteps_out + 1):
+            # Input window
+            x = data.iloc[i : i + self.num_timesteps_in]
+            # Output window
+            y = data.iloc[i + self.num_timesteps_in : i + self.num_timesteps_in + self.num_timesteps_out]
+            temporal_windows.append((x, y))
+        return temporal_windows
 
     def get_data(self):
-        # You can implement further processing if needed
-        return self.data
+        """
+        Returns the temporal data as a list of input-output pairs.
+        """
+        return self.temporal_data
+
 
 
 # **** NODE PREDICTION ON DISCRETE-DYNAMIC GRAPHS ****
