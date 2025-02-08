@@ -190,6 +190,7 @@ class LRGCNModel(nn.Module):
         return out, torch.stack((h, c), dim=0)
     
 # Contribution for the DL project
+# More architectures: stacked, random walk and autoencoder
 
 class RolandGNNModel(nn.Module):
     """
