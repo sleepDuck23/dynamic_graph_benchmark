@@ -13,20 +13,19 @@ import itertools
 device = 'cpu'
 
 
-
-model_names = ['evolvegcn_h', 'evolvegcn_o', 'lrgcn', 'gclstm']
+model_names = ['evolvegcn_h', 'evolvegcn_o', 'lrgcn', 'gclstm', 'Rolandgnn', 'TARWDiffusion', 'TiaRagnn', 'Dynamicgemm']
 dataset_names = ['bitcoin_alpha', 'as_733', 'elliptic']
 
 for model_name, dataset_name in itertools.product(model_names, dataset_names):
 
     data_splits_file = f'DATA_SPLITS/{dataset_name}/{dataset_name}_outer1_inner5.splits'
 
-    if model_name in ['evolvegcn_h', 'evolvegcn_o', 'lrgcn'] and dataset_name in ['bitcoin_alpha', 'as_733']:
+    if model_name in ['evolvegcn_h', 'evolvegcn_o', 'lrgcn', 'Rolandgnn', 'TARWDiffusion', 'TiaRagnn', 'Dynamicgemm'] and dataset_name in ['bitcoin_alpha', 'as_733']:
         path = f'/data/gravina/benchmark/save_1_12_2022/new_results_9_January_2023/RESULTS/balanced_link_prediction/{dataset_name}_{model_name}_{dataset_name}/MODEL_ASSESSMENT/OUTER_FOLD_1/'
     elif model_name == 'gclstm' and dataset_name in ['bitcoin_alpha', 'as_733']:
         path = f'/data/gravina/benchmark/save_1_12_2022/new_results_9_January_2023/RESULTS/imbalanced_link_prediction/{dataset_name}_{model_name}_{dataset_name}/MODEL_ASSESSMENT/OUTER_FOLD_1/'
     elif dataset_name == 'elliptic':
-        if model_name in ['evolvegcn_h', 'evolvegcn_o', 'gclstm']:
+        if model_name in ['evolvegcn_h', 'evolvegcn_o', 'gclstm', 'Rolandgnn', 'TARWDiffusion', 'TiaRagnn', 'Dynamicgemm']:
             path = f'/data/gravina/benchmark/save_1_12_2022/benchmark/RESULTS/{dataset_name}_{model_name}_{dataset_name}/MODEL_ASSESSMENT/OUTER_FOLD_1/'
             data_splits_file = f'/data/gravina/benchmark/save_1_12_2022/benchmark/DATA_SPLITS/{dataset_name}/{dataset_name}_outer1_inner5.splits'
         else:
@@ -90,8 +89,19 @@ for model_name, dataset_name in itertools.product(model_names, dataset_names):
             model_class = LRGCNModel
         elif model_name == 'gclstm':
             model_class = GCLSTMModel
+        elif model_name == 'Rolandgnn':
+            model_class = RolandGNNModel
+        elif model_name == 'TARWDiffusion':
+            model_class = TimeAwareRandomWalkDiffusion
+        elif model_name == 'TiaRagnn':
+            model_class = TiaRaGNNModel
+        elif model_name == 'Dynamicgemm':
+            model_class = DynamicGEMModel
         else:
             raise NotImplementedError()
+        
+
+        
 
         readout_class = s2c(config_with_metadata['supervised_config']['readout'])
         model = model_class(dim_node_features, dim_edge_features, dim_node_features, readout_class, config_with_metadata['supervised_config'])
