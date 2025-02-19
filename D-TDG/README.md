@@ -46,7 +46,7 @@ Also, refer to [PyDGN](https://github.com/diningphil/PyDGN) for more details abo
 MVA's DL Project:
 --------------------
 
-more datasets for the spatio-temporal graphs: https://github.com/benedekrozemberczki/spatiotemporal_datasets
+more datasets for the spatio-temporal graphs: https://s3.amazonaws.com/tripdata/2017-citibike-tripdata.zip
 
 stacked architecture:
 https://github.com/snap-stanford/roland
