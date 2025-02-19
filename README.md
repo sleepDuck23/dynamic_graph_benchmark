@@ -4,6 +4,9 @@ This final projects consist in learn about the models of deep learning for dynam
 ### Contributions
 This is a final project for a course in a master, so there is not much time to give a great contribution, for that reason the implementations kept itself with the spatio-temporal and discrete graphs (D-TDG sector of the repository). Also there is not a major change on the repository, so the initial guidelines to run it were kept as the autor of the original paper/repository recommended.
 
+- Notebooks for testing models and datasets
+Those test notebooks were used for testing models (how they work and need to be configured) and datasets (how to load and work them) in a more easier environment and with less computing effort then running all the benchmark.
+
 - New dataset for the D-TDG spatio-temporal graphs: https://citibikenyc.com/system-data
 
 This dataset changes from the idea of the others implemented on the paper, where everyone is related to traffic. The idea was t change it and see if it could lead to different behaviors from the models evaluation.
